@@ -1,0 +1,163 @@
+{% extends 'layouts/base.html' %} {% load static %} {% block title %}Generate
+Page{% endblock %} {% block main_content %}
+<section class="contact mt-3">
+  <div class="container mt-5">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">
+          Generate Schema
+        </li>
+      </ol>
+    </nav>
+    <h2>Generate Schema</h2>
+  </div>
+  <div class="container" data-aos="fade-up">
+    <div class="row">
+      <div class="col-6 mt-5 mt-lg-0">
+        <div class="message-container">
+          <div class="success-message"></div>
+          <div class="error-message"></div>
+        </div>
+        <form role="form" class="php-email-form" id="formGenerate" action="">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="urlPath">Url Path</label>
+            <input
+              type="text"
+              class="form-control"
+              name="url_path"
+              id="urlPath"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="jsonString">Json String</label>
+            <textarea
+              class="form-control"
+              id="jsonString"
+              name="json_string"
+              rows="5"
+              required
+            ></textarea>
+            <button
+              id="btn-submit"
+              type="button"
+              class="btn btn-success btn-sm mt-2"
+            >
+              Generate JSON Schema
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label for="jsonSchema">Json Schema</label>
+            <textarea
+              class="form-control"
+              id="jsonSchema"
+              name="json_schema"
+              rows="5"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <button type="submit" id="submitButton" class="btn btn-primary">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-6">
+        <div class="alert alert-info" role="alert">
+          <h4 class="alert-heading">Hasil JSON Schema</h4>
+          <pre id="jsonSchemaResult"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr />
+<script>
+  $(document).ready(function () {
+    function showAlert(type, message) {
+      $(".alert").remove();
+
+      var alertElement =
+        '<div class="alert alert-' +
+        type +
+        ' alert-dismissible fade show" role="alert">' +
+        "<strong>" +
+        message +
+        "</strong>" +
+        "</div>";
+
+      $("#alertContainer").append(alertElement);
+    }
+  });
+  $("#btn-submit").on("click", function () {
+    var urlPath = $("#urlPath").val();
+    var jsonString = $("#jsonString").val();
+
+    var data = {
+      url_path: urlPath,
+      json_string: jsonString,
+    };
+
+    $.ajax({
+      type: "POST",
+      url: "/generateJsonSchema/",
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      success: function (response) {
+        let responseJson = response;
+        if ("$schema" in responseJson) {
+          delete responseJson["$schema"];
+        }
+        let resultJsonString = JSON.stringify(responseJson, null, 2);
+        $("#jsonSchemaResult").text(resultJsonString);
+      },
+      error: function (error) {
+        console.error("Error:", error);
+        $(".error-message").text(
+          "Error generating JSON Schema. Please try again."
+        );
+      },
+    });
+  });
+
+  $(document).on("submit", "#formGenerate", function (e) {
+    e.preventDefault;
+    var urlPath = $("#urlPath").val();
+    var jsonString = $("#jsonString").val();
+    var jsonSchema = $("#jsonSchema").val();
+
+    // Mendapatkan CSRF Token dari formulir
+    var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+
+    var data = {
+      url_path: urlPath,
+      json_string: jsonString,
+      json_schema: jsonSchema,
+    };
+    console.log(data);
+    $.ajax({
+      type: "POST",
+      url: "/insert_data/",
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
+      success: function (response) {
+        alert("Data Berhasil di tambahkan");
+        window.location.reload();
+        console.log("Success:", response);
+      },
+      error: function (e) {
+        alert("erronya" + e.message);
+        window.location.reload();
+      },
+    });
+  });
+</script>
+
+{% endblock %}
